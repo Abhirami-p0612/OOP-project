@@ -1,0 +1,74 @@
+/* Reset */
+body{
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: Arial, sans-serif;
+}
+
+/* Parent container: 2 sections side by side */
+.container {
+    display: flex;
+    height: 100vh;
+}
+
+/* ==== LEFT SIDE ==== */
+.left-side {
+    flex: 2;                       /* Bigger width */
+    background-color: #23395d;      /* Blue shade */
+    color: white;
+    display: flex;
+    justify-content: center;        /* Center horizontally */
+    align-items: center;            /* Center vertically */
+    font-size: 2rem;                /* Bigger text */
+    text-align: center;
+}
+
+/* ==== RIGHT SIDE ==== */
+.right-side {
+    flex: 1;                        /* Smaller width */
+    background-color: white;
+    display: flex;
+    justify-content: center;        /* Center horizontally */
+    align-items: center;            /* Center vertically */
+}
+
+/* Small box for signup */
+.signup-box {
+    width: 280px;
+    padding: 30px;
+    text-align: center;             /* Center heading and form elements */
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.signup-box h2 {
+    margin-bottom: 20px;
+}
+
+/* Inputs */
+.input-box {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Sign Up button (centered by default because parent text-align:center) */
+.signup-btn {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background-color: #3b82f6;  /* Same blue shade as left side */
+    color: white;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.signup-btn:hover {
+    background-color: #2563eb;  /* Darker blue on hover */
+}
+
