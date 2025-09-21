@@ -1,5 +1,6 @@
 package com.project.lostandfound;
-
+import org.springframework.web.multipart.MultipartFile;
+import com.project.lostandfound.LostItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,6 +13,9 @@ public class HomeController {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private LostItemRepository lostItemRepository;
+
 
     @GetMapping("/index")
     public String indexPage() {
@@ -24,6 +28,7 @@ public class HomeController {
             @RequestParam String password,
             Model model){
         int rowsAffected = userRepository.save(email, password);
+
 
         if (rowsAffected > 0) {
             model.addAttribute("username", email); // Pass username to next page
@@ -52,5 +57,34 @@ public class HomeController {
     @GetMapping("/view-lost")
     public String viewLostPage() {
         return "view-lost";  // templates/view-lost.html
+    }
+
+    //next
+    // inside HomeController
+    @PostMapping("/report-lost")
+    public String handleReportLost(@RequestParam("itemName") String itemName,
+                                   @RequestParam("description") String description,
+                                   @RequestParam("location") String location,
+                                   @RequestParam("contact") String contact,
+                                   @RequestParam("dateLost") String dateLost,
+                                   @RequestParam("image") MultipartFile image,
+                                   Model model) {
+
+        try {
+            // Save to database via repository
+            int rowsAffected = lostItemRepository.save(itemName, description, location, contact, dateLost, image);
+
+            if (rowsAffected > 0) {
+                model.addAttribute("message", "Item reported successfully!");
+                return "selection"; // redirect to dashboard/selection page
+            } else {
+                model.addAttribute("error", "Failed to save the item. Please try again.");
+                return "report-lost";
+            }
+
+        } catch (Exception e) {
+            model.addAttribute("error", "An unexpected error occurred: " + e.getMessage());
+            return "report-lost";
+        }
     }
 }

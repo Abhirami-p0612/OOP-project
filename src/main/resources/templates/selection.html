@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>Selection</title>
@@ -18,8 +18,22 @@
             font-size: 28px;
             font-weight: bold;
             margin-top: 40px;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
             color: #333;
+        }
+
+        /* ✅ Styling for messages */
+        .message {
+            color: green;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: bold;
         }
 
         .main-container {
@@ -46,7 +60,7 @@
         .button-container {
             display: flex;
             flex-direction: column;
-            gap: 20px; /* Adds enough gap between buttons */
+            gap: 20px;
         }
 
         .btn {
@@ -75,6 +89,10 @@
 <div class="welcome">
     Welcome <span th:text="${username}"></span>!
 </div>
+
+<!-- ✅ Success or error messages -->
+<p th:if="${message}" th:text="${message}" class="message"></p>
+<p th:if="${error}" th:text="${error}" class="error"></p>
 
 <!-- Two Column Layout -->
 <div class="main-container">
