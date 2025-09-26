@@ -1,12 +1,10 @@
 package com.project.lostandfound;
+
 import org.springframework.web.multipart.MultipartFile;
-import com.project.lostandfound.LostItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 @Controller
 public class HomeController {
@@ -15,7 +13,8 @@ public class HomeController {
     private UserRepository userRepository;
     @Autowired
     private LostItemRepository lostItemRepository;
-
+    @Autowired
+    private FoundItemRepository foundItemRepository;
 
     @GetMapping("/index")
     public String indexPage() {
@@ -29,7 +28,6 @@ public class HomeController {
             Model model){
         int rowsAffected = userRepository.save(email, password);
 
-
         if (rowsAffected > 0) {
             model.addAttribute("username", email); // Pass username to next page
             return "selection";
@@ -38,7 +36,7 @@ public class HomeController {
         }
     }
 
-    // --- New Mappings for Second Page Buttons ---
+    // --- Pages for navigation ---
     @GetMapping("/report-found")
     public String reportFoundPage() {
         return "report-found";  // templates/report-found.html
@@ -59,32 +57,55 @@ public class HomeController {
         return "view-lost";  // templates/view-lost.html
     }
 
-    //next
-    // inside HomeController
+    // --- Handle Lost Report ---
     @PostMapping("/report-lost")
-    public String handleReportLost(@RequestParam("itemName") String itemName,
-                                   @RequestParam("description") String description,
-                                   @RequestParam("location") String location,
-                                   @RequestParam("contact") String contact,
-                                   @RequestParam("dateLost") String dateLost,
-                                   @RequestParam("image") MultipartFile image,
-                                   Model model) {
+    public String handleReportLost(
+            @RequestParam("itemName") String itemName,
+            @RequestParam("description") String description,
+            @RequestParam("location") String location,
+            @RequestParam("contact") String contact,
+            @RequestParam("dateLost") String dateLost,
+            @RequestParam("image") MultipartFile image,
+            Model model) {
 
         try {
-            // Save to database via repository
             int rowsAffected = lostItemRepository.save(itemName, description, location, contact, dateLost, image);
 
             if (rowsAffected > 0) {
                 model.addAttribute("message", "Item reported successfully!");
-                return "selection"; // redirect to dashboard/selection page
+                return "selection";
             } else {
                 model.addAttribute("error", "Failed to save the item. Please try again.");
                 return "report-lost";
             }
-
         } catch (Exception e) {
             model.addAttribute("error", "An unexpected error occurred: " + e.getMessage());
             return "report-lost";
+        }
+    }
+
+
+    // --- Handle Found Report ---
+    @PostMapping("/report-found")
+    public String handleReportFound(@RequestParam("description") String description,
+                                    @RequestParam("location") String location,
+                                    @RequestParam("contact") String contact,
+                                    @RequestParam("dateFound") String dateFound,
+                                    @RequestParam("image") MultipartFile image,
+                                    Model model) {
+        try {
+            int rowsAffected = foundItemRepository.save(description, location, contact, dateFound, image);
+
+            if (rowsAffected > 0) {
+                model.addAttribute("message", "Found item reported successfully!");
+                return "selection";
+            } else {
+                model.addAttribute("error", "Failed to save the found item.");
+                return "report-found";
+            }
+        } catch (Exception e) {
+            model.addAttribute("error", "Error: " + e.getMessage());
+            return "report-found";
         }
     }
 }

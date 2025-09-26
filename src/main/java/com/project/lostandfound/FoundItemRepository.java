@@ -15,17 +15,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Repository
-public class LostItemRepository {
+public class FoundItemRepository {
 
-    private static final Logger logger = LoggerFactory.getLogger(LostItemRepository.class);
+    private static final Logger logger = LoggerFactory.getLogger(FoundItemRepository.class);
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @Value("${file.upload-dir:src/main/resources/static/images/lost/}")
+    @Value("${file.upload-dir:src/main/resources/static/images/found/}")
     private String uploadDir;
 
-    public int save(String itemName, String description, String location, String contact, String dateLost, MultipartFile image) {
+    public int save(String description, String location, String contact, String dateFound, MultipartFile image) {
 
         String imagePathForDb = null;
 
@@ -42,19 +42,19 @@ public class LostItemRepository {
                 Path filePath = uploadPath.resolve(imageName);
                 Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-                imagePathForDb = "/images/lost/" + imageName;
+                imagePathForDb = "/images/found/" + imageName;
             } catch (IOException e) {
                 logger.error("Failed to save uploaded file", e);
                 return 0;
             }
         }
 
-        String sql = "INSERT INTO lost_items (item_name, description, location, contact_info, date_lost, image_path) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO found_items (description, location, contact_info, date_found, image_path) " +
+                "VALUES (?, ?, ?, ?, ?)";
         try {
-            return jdbcTemplate.update(sql, itemName, description, location, contact, dateLost, imagePathForDb);
+            return jdbcTemplate.update(sql, description, location, contact, dateFound, imagePathForDb);
         } catch (Exception e) {
-            logger.error("Failed to insert lost item into DB", e);
+            logger.error("Failed to insert found item into DB", e);
             return 0;
         }
     }
