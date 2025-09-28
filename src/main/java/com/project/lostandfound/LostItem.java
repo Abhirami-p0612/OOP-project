@@ -1,0 +1,87 @@
+package com.project.lostandfound;
+
+// This class acts as a model for a lost item.
+public class LostItem {
+
+    // Fields must match the columns in the 'lost_items' table.
+    private int id;
+    private String itemName;
+    private String description;
+    private String location;
+    private String contactInfo;
+    private String dateLost;
+    private String imagePath;
+
+    // A default constructor is required for BeanPropertyRowMapper.
+    public LostItem() {
+    }
+
+    // You can add a parameterized constructor for convenience.
+    public LostItem(int id, String itemName, String description, String location, String contactInfo, String dateLost, String imagePath) {
+        this.id = id;
+        this.itemName = itemName;
+        this.description = description;
+        this.location = location;
+        this.contactInfo = contactInfo;
+        this.dateLost = dateLost;
+        this.imagePath = imagePath;
+    }
+
+    // Add getters and setters for all fields.
+    // The BeanPropertyRowMapper uses these setters to populate the object.
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getItemName() {
+        return itemName;
+    }
+
+    public void setItemName(String itemName) {
+        this.itemName = itemName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getContactInfo() {
+        return contactInfo;
+    }
+
+    public void setContactInfo(String contactInfo) {
+        this.contactInfo = contactInfo;
+    }
+
+    public String getDateLost() {
+        return dateLost;
+    }
+
+    public void setDateLost(String dateLost) {
+        this.dateLost = dateLost;
+    }
+
+    public String getImagePath() {
+        return imagePath;
+    }
+
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
+    }
+}

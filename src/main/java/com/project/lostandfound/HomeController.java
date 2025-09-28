@@ -6,6 +6,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+
 @Controller
 public class HomeController {
 
@@ -53,9 +54,15 @@ public class HomeController {
     }
 
     @GetMapping("/view-lost")
-    public String viewLostPage() {
+    public String viewLostPage(Model model) {
+        model.addAttribute("items", lostItemRepository.findAll());
         return "view-lost";  // templates/view-lost.html
     }
+    @GetMapping("/selection")
+    public String selectionPage() {
+        return "selection"; // templates/selection.html
+    }
+
 
     // --- Handle Lost Report ---
     @PostMapping("/report-lost")
