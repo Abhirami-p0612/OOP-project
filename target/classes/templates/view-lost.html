@@ -1,11 +1,96 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
     <title>View Lost Items</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #23395d;
+        }
+        .item-card {
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
+            justify-content: space-between;
+        }
+        .item-details {
+            flex-grow: 1;
+        }
+        .item-image {
+            margin-left: 20px;
+            flex-shrink: 0;
+        }
+        .item-image img {
+            max-width: 150px;
+            height: auto;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .no-image {
+            width: 150px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #ddd;
+            color: #888;
+            text-align: center;
+            border-radius: 8px;
+        }
+        .return-button {
+            display: block;
+            margin: 20px auto 0;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-<h2>View Lost Items Page</h2>
-<p>This page will display all reported lost items. (Work to be done by next member)</p>
+<div class="container">
+    <h1>All Lost Items</h1>
+
+    <div th:each="item : ${items}" class="item-card">
+        <div class="item-details">
+            <h2>Item Name: <span th:text="${item.itemName}"></span></h2>
+            <p><strong>Description:</strong> <span th:text="${item.description}"></span></p>
+            <p><strong>Location:</strong> <span th:text="${item.location}"></span></p>
+            <p><strong>Contact:</strong> <span th:text="${item.contactInfo}"></span></p>
+            <p><strong>Date Lost:</strong> <span th:text="${item.dateLost}"></span></p>
+        </div>
+
+        <div class="item-image">
+            <div th:if="${item.imagePath}" class="image-container">
+                <img th:src="${item.imagePath}" alt="Lost Item Image"/>
+            </div>
+            <div th:unless="${item.imagePath}" class="no-image">
+                No Image
+            </div>
+        </div>
+    </div>
+
+    <a href="/selection" class="return-button">Return to Dashboard</a>
+</div>
 </body>
 </html>
