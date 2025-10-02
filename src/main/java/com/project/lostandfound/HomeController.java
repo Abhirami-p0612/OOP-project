@@ -49,8 +49,15 @@ public class HomeController {
     }
 
     @GetMapping("/view-found")
-    public String viewFoundPage() {
+    public String viewFoundPage(Model model) {
+        model.addAttribute("foundItems", foundItemRepository.findAll());
         return "view-found";  // templates/view-found.html
+    }
+
+    @GetMapping("/delete-found/{id}")
+    public String deleteFoundItem(@PathVariable int id) {
+        foundItemRepository.deleteById(id);
+        return "redirect:/view-found";  // reload the found items page
     }
 
     @GetMapping("/view-lost")

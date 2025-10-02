@@ -2,6 +2,8 @@ package com.project.lostandfound;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
@@ -9,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.List;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -22,6 +25,9 @@ public class FoundItemRepository {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private ResourceLoader resourceLoader;
+
     @Value("${file.upload-dir:src/main/resources/static/images/found/}")
     private String uploadDir;
 
@@ -33,7 +39,14 @@ public class FoundItemRepository {
             String originalFilename = StringUtils.cleanPath(image.getOriginalFilename());
             String imageName = UUID.randomUUID().toString() + "_" + originalFilename;
 
-            Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Path uploadPath;
+            try {
+                uploadPath = Paths.get(resourceLoader.getResource("classpath:static/images/found/").getURI());
+            } catch (IOException e) {
+                logger.error("Failed to get upload directory path", e);
+                return 0;
+            }
+
             try {
                 if (!Files.exists(uploadPath)) {
                     Files.createDirectories(uploadPath);
@@ -57,5 +70,15 @@ public class FoundItemRepository {
             logger.error("Failed to insert found item into DB", e);
             return 0;
         }
+    }
+
+    public List<FoundItem> findAll() {
+        String sql = "SELECT id, description, location, contact_info, date_found, image_path FROM found_items";
+        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(FoundItem.class));
+    }
+
+    public int deleteById(int id) {
+        String sql = "DELETE FROM found_items WHERE id = ?";
+        return jdbcTemplate.update(sql, id);
     }
 }
