@@ -4,42 +4,38 @@
     <meta charset="UTF-8">
     <title>Selection</title>
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
         body {
             font-family: Arial, sans-serif;
             background: #f4f7fc;
-            margin: 0;
-            padding: 0;
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            align-items: center;        /* vertical center */
+            justify-content: center;    /* horizontal center */
+        }
+
+        .wrapper {
+            width: 70%;
         }
 
         .welcome {
             font-size: 28px;
             font-weight: bold;
-            margin-top: 40px;
             margin-bottom: 20px;
             color: #333;
+            text-align: center;
         }
 
-        /* ✅ Styling for messages */
-        .message {
-            color: green;
-            margin-bottom: 20px;
-            font-size: 16px;
-            font-weight: bold;
-        }
-        .error {
-            color: red;
-            margin-bottom: 20px;
-            font-size: 16px;
-            font-weight: bold;
-        }
+        /* messages */
+        .message { color: green; margin-bottom: 20px; font-size: 16px; font-weight: bold; text-align: center; }
+        .error { color: red; margin-bottom: 20px; font-size: 16px; font-weight: bold; text-align: center; }
 
         .main-container {
             display: flex;
             justify-content: space-between;
-            width: 70%;
+            width: 100%;
             margin-top: 20px;
         }
 
@@ -52,10 +48,7 @@
             text-align: center;
         }
 
-        h2 {
-            margin-bottom: 25px;
-            color: #444;
-        }
+        h2 { margin-bottom: 25px; color: #444; }
 
         .button-container {
             display: flex;
@@ -77,40 +70,35 @@
             display: block;
         }
 
-        .btn:hover {
-            background-color: #0056b3;
-            transform: scale(1.03);
-        }
+        .btn:hover { background-color: #0056b3; transform: scale(1.03); }
+
     </style>
 </head>
 <body>
 
-<!-- Welcome message -->
-<div class="welcome">
-    Welcome <span th:text="${username}"></span>!
-</div>
-
-<!-- ✅ Success or error messages -->
-<p th:if="${message}" th:text="${message}" class="message"></p>
-<p th:if="${error}" th:text="${error}" class="error"></p>
-
-<!-- Two Column Layout -->
-<div class="main-container">
-    <!-- Left Side - Report -->
-    <div class="section">
-        <h2>Report</h2>
-        <div class="button-container">
-            <a href="/report-found" class="btn">Report Found Item</a>
-            <a href="/report-lost" class="btn">Report Lost Item</a>
-        </div>
+<div class="wrapper">
+    <div class="welcome">
+        Welcome <span th:text="${username}">User</span>
     </div>
 
-    <!-- Right Side - View -->
-    <div class="section">
-        <h2>View</h2>
-        <div class="button-container">
-            <a href="/view-found" class="btn">View Found Items</a>
-            <a href="/view-lost" class="btn">View Lost Items</a>
+    <p th:if="${message}" th:text="${message}" class="message"></p>
+    <p th:if="${error}" th:text="${error}" class="error"></p>
+
+    <div class="main-container">
+        <div class="section">
+            <h2>Report</h2>
+            <div class="button-container">
+                <a href="/report-found" class="btn">Report Found Item</a>
+                <a href="/report-lost" class="btn">Report Lost Item</a>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>View</h2>
+            <div class="button-container">
+                <a href="/view-found" class="btn">View Found Items</a>
+                <a href="/view-lost" class="btn">View Lost Items</a>
+            </div>
         </div>
     </div>
 </div>

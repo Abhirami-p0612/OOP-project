@@ -1,11 +1,10 @@
 package com.project.lostandfound;
 
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.multipart.MultipartFile;
 
 @Controller
 public class HomeController {
@@ -17,7 +16,7 @@ public class HomeController {
     @Autowired
     private FoundItemRepository foundItemRepository;
 
-    @GetMapping("/index")
+    @GetMapping({"/", "/index"})
     public String indexPage() {
         return "index";          // templates/index.html
     }
@@ -30,7 +29,7 @@ public class HomeController {
         int rowsAffected = userRepository.save(email, password);
 
         if (rowsAffected > 0) {
-            model.addAttribute("username", email); // Pass username to next page
+            model.addAttribute("username", email); // Pass username (email) to dashboard
             return "selection";
         } else {
             return "index";
@@ -49,27 +48,25 @@ public class HomeController {
     }
 
     @GetMapping("/view-found")
-    public String viewFoundPage(Model model) {
+    public String viewFoundPage(@RequestParam(value = "highlightId", required = false) Integer highlightId, Model model) {
         model.addAttribute("foundItems", foundItemRepository.findAll());
+        model.addAttribute("highlightId", highlightId);
         return "view-found";  // templates/view-found.html
     }
 
-    @GetMapping("/delete-found/{id}")
-    public String deleteFoundItem(@PathVariable int id) {
-        foundItemRepository.deleteById(id);
-        return "redirect:/view-found";  // reload the found items page
-    }
-
     @GetMapping("/view-lost")
-    public String viewLostPage(Model model) {
+    public String viewLostPage(@RequestParam(value = "highlightId", required = false) Integer highlightId, Model model) {
         model.addAttribute("items", lostItemRepository.findAll());
+        model.addAttribute("highlightId", highlightId);
         return "view-lost";  // templates/view-lost.html
     }
+
     @GetMapping("/selection")
-    public String selectionPage() {
+    public String selectionPage(@RequestParam(value = "username", required = false) String username, Model model) {
+        // Support both model attribute and request param for convenience
+        if (username != null) model.addAttribute("username", username);
         return "selection"; // templates/selection.html
     }
-
 
     // --- Handle Lost Report ---
     @PostMapping("/report-lost")
@@ -79,11 +76,19 @@ public class HomeController {
             @RequestParam("location") String location,
             @RequestParam("contact") String contact,
             @RequestParam("dateLost") String dateLost,
-            @RequestParam("image") MultipartFile image,
+            @RequestParam(value = "image", required = false) MultipartFile image,
             Model model) {
 
         try {
             int rowsAffected = lostItemRepository.save(itemName, description, location, contact, dateLost, image);
+
+            // After saving, check for a similar found item and redirect if found
+            FoundItem match = foundItemRepository.findSimilar(itemName, description);
+            if (match != null) {
+                // redirect to view-found with highlight
+                model.addAttribute("message", "We found a similar item reported as FOUND. Redirecting you to the item...");
+                return "redirect:/view-found?highlightId=" + match.getId();
+            }
 
             if (rowsAffected > 0) {
                 model.addAttribute("message", "Item reported successfully!");
@@ -101,14 +106,22 @@ public class HomeController {
 
     // --- Handle Found Report ---
     @PostMapping("/report-found")
-    public String handleReportFound(@RequestParam("description") String description,
+    public String handleReportFound(@RequestParam(value = "itemName", required = false) String itemName,
+                                    @RequestParam("description") String description,
                                     @RequestParam("location") String location,
                                     @RequestParam("contact") String contact,
                                     @RequestParam("dateFound") String dateFound,
-                                    @RequestParam("image") MultipartFile image,
+                                    @RequestParam(value = "image", required = false) MultipartFile image,
                                     Model model) {
         try {
-            int rowsAffected = foundItemRepository.save(description, location, contact, dateFound, image);
+            int rowsAffected = foundItemRepository.save(itemName, description, location, contact, dateFound, image);
+
+            // After saving, check for a similar lost item and redirect if found
+            LostItem match = lostItemRepository.findSimilar(itemName, description);
+            if (match != null) {
+                model.addAttribute("message", "We found a similar item reported as LOST. Redirecting you to the item...");
+                return "redirect:/view-lost?highlightId=" + match.getId();
+            }
 
             if (rowsAffected > 0) {
                 model.addAttribute("message", "Found item reported successfully!");

@@ -17,10 +17,11 @@ CREATE TABLE lost_items (
 
 CREATE TABLE found_items (
     id INT PRIMARY KEY AUTO_INCREMENT,
+    item_name VARCHAR(255),          -- NEW: item_name added for found items
     description TEXT,
     location VARCHAR(255),
     contact_info VARCHAR(255),
-    date_found DATETIME,
+    date_found TIMESTAMP,
     image_path VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

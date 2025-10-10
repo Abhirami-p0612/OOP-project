@@ -1,5 +1,7 @@
 package com.project.lostandfound;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
@@ -14,9 +16,6 @@ import java.nio.file.*;
 import java.util.List;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 @Repository
 public class LostItemRepository {
 
@@ -25,7 +24,6 @@ public class LostItemRepository {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    // Add this Autowired annotation
     @Autowired
     private ResourceLoader resourceLoader;
 
@@ -40,7 +38,6 @@ public class LostItemRepository {
             String originalFilename = StringUtils.cleanPath(image.getOriginalFilename());
             String imageName = UUID.randomUUID().toString() + "_" + originalFilename;
 
-            // Use ResourceLoader to get a reliable path
             Path uploadPath;
             try {
                 uploadPath = Paths.get(resourceLoader.getResource("classpath:static/images/lost/").getURI());
@@ -74,7 +71,24 @@ public class LostItemRepository {
     }
 
     public List<LostItem> findAll() {
-        String sql = "SELECT id, item_name, description, location, contact_info, date_lost, image_path FROM lost_items";
+        String sql = "SELECT id, item_name as itemName, description, location, contact_info as contactInfo, date_lost as dateLost, image_path as imagePath FROM lost_items";
         return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(LostItem.class));
+    }
+
+    public LostItem findById(int id) {
+        String sql = "SELECT id, item_name as itemName, description, location, contact_info as contactInfo, date_lost as dateLost, image_path as imagePath FROM lost_items WHERE id = ?";
+        List<LostItem> list = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(LostItem.class), id);
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    // Find a similar lost item (used when user reports a found item)
+    public LostItem findSimilar(String itemName, String description) {
+        String sqlName = "SELECT id, item_name as itemName, description, location, contact_info as contactInfo, date_lost as dateLost, image_path as imagePath FROM lost_items WHERE LOWER(item_name) = LOWER(?) LIMIT 1";
+        List<LostItem> byName = jdbcTemplate.query(sqlName, new BeanPropertyRowMapper<>(LostItem.class), itemName == null ? "" : itemName);
+        if (!byName.isEmpty()) return byName.get(0);
+
+        String sqlDesc = "SELECT id, item_name as itemName, description, location, contact_info as contactInfo, date_lost as dateLost, image_path as imagePath FROM lost_items WHERE LOWER(description) LIKE LOWER(?) LIMIT 1";
+        List<LostItem> byDesc = jdbcTemplate.query(sqlDesc, new BeanPropertyRowMapper<>(LostItem.class), "%" + (description == null ? "" : description) + "%");
+        return byDesc.isEmpty() ? null : byDesc.get(0);
     }
 }

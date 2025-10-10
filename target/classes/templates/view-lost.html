@@ -11,37 +11,23 @@
             padding: 20px;
         }
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: auto;
             background: #fff;
             padding: 20px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
         }
-        h1 {
-            text-align: center;
-            color: #23395d;
-        }
-        .item-card {
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid #eee;
-            padding: 15px 0;
-            justify-content: space-between;
-        }
-        .item-details {
-            flex-grow: 1;
-        }
-        .item-image {
-            margin-left: 20px;
-            flex-shrink: 0;
-        }
-        .item-image img {
-            max-width: 150px;
-            height: auto;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-        }
+        h1 { text-align: center; color: #23395d; }
+
+        .item-card { display: flex; align-items: center; border-bottom: 1px solid #eee; padding: 15px 0; justify-content: space-between; }
+        .item-card.highlight { border: 2px solid #ffcc00; background: #fff9e6; padding: 14px; border-radius: 6px; }
+
+        .item-details { flex-grow: 1; }
+        .item-image { margin-left: 20px; flex-shrink: 0; }
+
+        .item-image img { max-width: 150px; height: auto; border-radius: 8px; border: 1px solid #ddd; }
+
         .no-image {
             width: 150px;
             height: 100px;
@@ -53,6 +39,7 @@
             text-align: center;
             border-radius: 8px;
         }
+
         .return-button {
             display: block;
             margin: 20px auto 0;
@@ -66,12 +53,27 @@
             cursor: pointer;
         }
     </style>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var highlightId = /*[[${highlightId}==null ? 'null' : ${highlightId}]]*/ 'null';
+        window.addEventListener('DOMContentLoaded', function() {
+            if (highlightId !== null && highlightId !== 'null') {
+                var el = document.getElementById('item-' + highlightId);
+                if (el) {
+                    el.classList.add('highlight');
+                    el.scrollIntoView({behavior: 'smooth', block: 'center'});
+                }
+            }
+        });
+        /*]]>*/
+    </script>
 </head>
 <body>
 <div class="container">
     <h1>All Lost Items</h1>
 
-    <div th:each="item : ${items}" class="item-card">
+    <div th:each="item : ${items}" th:attr="id=${'item-' + item.id}" class="item-card">
         <div class="item-details">
             <h2>Item Name: <span th:text="${item.itemName}"></span></h2>
             <p><strong>Description:</strong> <span th:text="${item.description}"></span></p>
