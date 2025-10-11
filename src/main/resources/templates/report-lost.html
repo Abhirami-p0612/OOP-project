@@ -24,7 +24,6 @@
         }
 
         h2 { text-align: center; margin-bottom: 25px; color: #333; }
-
         label { display: block; font-weight: bold; margin-bottom: 6px; color: #444; }
 
         input, textarea {
@@ -60,7 +59,7 @@
 <div class="container">
     <h2>Report Lost Item</h2>
 
-    <!-- Success or Error Messages -->
+    <!-- Messages -->
     <p th:if="${message}" th:text="${message}" class="message"></p>
     <p th:if="${error}" th:text="${error}" class="error"></p>
 

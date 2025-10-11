@@ -1,10 +1,12 @@
 package com.project.lostandfound;
 
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class HomeController {
@@ -25,15 +27,60 @@ public class HomeController {
     public String handleSignUp(
             @RequestParam String email,
             @RequestParam String password,
-            Model model){
+            Model model,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
+        // If email already exists, redirect to login with message
+        if (userRepository.existsByEmail(email)) {
+            redirectAttributes.addFlashAttribute("message", "This email has an account already. Please login");
+            return "redirect:/login";
+        }
+
         int rowsAffected = userRepository.save(email, password);
 
         if (rowsAffected > 0) {
-            model.addAttribute("username", email); // Pass username (email) to dashboard
+            // Save email in session and go to dashboard
+            session.setAttribute("username", email);
+            model.addAttribute("username", email); // Pass username to next page
             return "selection";
         } else {
+            model.addAttribute("error", "Failed to create account. Please try again.");
             return "index";
         }
+    }
+
+    // --- Login GET (shows login page) ---
+    @GetMapping("/login")
+    public String loginPage() {
+        return "login";  // templates/login.html
+    }
+
+    // --- Handle Login POST ---
+    @PostMapping("/handle-login")
+    public String handleLogin(
+            @RequestParam String email,
+            @RequestParam String password,
+            Model model,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
+        // If email doesn't exist, redirect to signup with message
+        if (!userRepository.existsByEmail(email)) {
+            redirectAttributes.addFlashAttribute("error", "Account doesn't exist. Please sign up first.");
+            return "redirect:/index";
+        }
+
+        String stored = userRepository.getPasswordByEmail(email);
+        if (stored == null || !stored.equals(password)) {
+            model.addAttribute("error", "Incorrect password. Please try again.");
+            return "login";
+        }
+
+        // Successful login -> set session and go to dashboard
+        session.setAttribute("username", email);
+        model.addAttribute("username", email);
+        return "selection";
     }
 
     // --- Pages for navigation ---
@@ -62,9 +109,12 @@ public class HomeController {
     }
 
     @GetMapping("/selection")
-    public String selectionPage(@RequestParam(value = "username", required = false) String username, Model model) {
-        // Support both model attribute and request param for convenience
-        if (username != null) model.addAttribute("username", username);
+    public String selectionPage(HttpSession session, Model model) {
+        // Pull username from session if present
+        Object username = session.getAttribute("username");
+        if (username != null) {
+            model.addAttribute("username", username.toString());
+        }
         return "selection"; // templates/selection.html
     }
 
@@ -85,7 +135,6 @@ public class HomeController {
             // After saving, check for a similar found item and redirect if found
             FoundItem match = foundItemRepository.findSimilar(itemName, description);
             if (match != null) {
-                // redirect to view-found with highlight
                 model.addAttribute("message", "We found a similar item reported as FOUND. Redirecting you to the item...");
                 return "redirect:/view-found?highlightId=" + match.getId();
             }
