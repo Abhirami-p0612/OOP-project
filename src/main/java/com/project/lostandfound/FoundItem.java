@@ -2,10 +2,16 @@ package com.project.lostandfound;
 
 public class FoundItem {
     private int id;
-    private String itemName;      // NEW - item name for found items
+    private String itemName;
     private String description;
     private String location;
-    private String contactInfo;
+
+    // ADDED fields:
+    private String contactName;
+    private String contactPhone;
+    private String contactEmail;
+    private String status;
+
     private String dateFound;
     private String imagePath;
 
@@ -16,7 +22,6 @@ public class FoundItem {
         this.itemName = itemName;
         this.description = description;
         this.location = location;
-        this.contactInfo = contactInfo;
         this.dateFound = dateFound;
         this.imagePath = imagePath;
     }
@@ -33,12 +38,22 @@ public class FoundItem {
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
 
-    public String getContactInfo() { return contactInfo; }
-    public void setContactInfo(String contactInfo) { this.contactInfo = contactInfo; }
 
     public String getDateFound() { return dateFound; }
     public void setDateFound(String dateFound) { this.dateFound = dateFound; }
 
     public String getImagePath() { return imagePath; }
     public void setImagePath(String imagePath) { this.imagePath = imagePath; }
+
+    public String getContactName() { return contactName; }
+    public void setContactName(String contactName) { this.contactName = contactName; }
+
+    public String getContactPhone() { return contactPhone; }
+    public void setContactPhone(String contactPhone) { this.contactPhone = contactPhone; }
+
+    public String getContactEmail() { return contactEmail; }
+    public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }

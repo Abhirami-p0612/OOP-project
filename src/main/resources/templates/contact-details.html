@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Contact Details</title>
+    <style>
+        /* Add basic styles for the new page */
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f4f4f4; }
+        .details-box { max-width: 500px; margin: 30px auto; padding: 25px; border: 1px solid #ccc; border-radius: 8px; background-color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h2 { color: #007BFF; }
+        p { margin: 10px 0; font-size: 1.1em; }
+        strong { display: inline-block; width: 150px; text-align: left; }
+        .confirmation-form button {
+            padding: 12px 25px;
+            font-size: 16px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .confirmation-form button:hover { background-color: #1e7e34; }
+    </style>
+</head>
+<body>
+
+<div class="details-box" th:if="${item}">
+    <h2>Contact Details for Found Item: <span th:text="${item.itemName}"></span></h2>
+    <p><strong>Reporter Name:</strong> <span th:text="${item.contactName}"></span></p>
+    <p><strong>Phone Number:</strong> <span th:text="${item.contactPhone}"></span></p>
+    <p><strong>Email Address:</strong> <span th:text="${item.contactEmail}"></span></p>
+    <hr>
+
+    <div class="confirmation-form">
+        <p>If you have received your item from the reporter, please click the button below to start the deletion process.</p>
+
+        <form th:action="@{/confirm-item-received/{id}(id=${item.id})}" method="post">
+            <button type="submit">Confirmation Button (Item Received)</button>
+        </form>
+
+        <p style="margin-top: 15px; color: #cc0000; font-size: 0.9em;">
+            *Note: After clicking, the item will be deleted only after the **reporter** confirms the successful handover.
+        </p>
+    </div>
+</div>
+
+</body>
+</html>

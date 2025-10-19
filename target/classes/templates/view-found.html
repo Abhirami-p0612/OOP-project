@@ -68,6 +68,10 @@
             text-decoration: none;
             cursor: pointer;
         }
+
+        /* Styles for messages */
+        .message { color: green; text-align: center; font-weight: bold; margin: 15px 0; }
+        .error { color: red; text-align: center; font-weight: bold; margin: 15px 0; }
     </style>
 
     <script th:inline="javascript">
@@ -89,6 +93,9 @@
 <div class="container">
     <h1>All Found Items</h1>
 
+    <p th:if="${message}" th:text="${message}" class="message"></p>
+    <p th:if="${error}" th:text="${error}" class="error"></p>
+
     <div th:if="${#lists.isEmpty(foundItems)}" style="text-align: center; color: #888; margin: 30px 0;">
         No items found.
     </div>
@@ -98,8 +105,18 @@
             <p><strong>Item Name:</strong> <span th:text="${item.itemName}">-</span></p>
             <p><strong>Description:</strong> <span th:text="${item.description}"></span></p>
             <p><strong>Location:</strong> <span th:text="${item.location}"></span></p>
-            <p><strong>Contact:</strong> <span th:text="${item.contactInfo}"></span></p>
+            <p><strong>Status:</strong> <span th:text="${item.status}"></span></p>
             <p><strong>Date Found:</strong> <span th:text="${item.dateFound}"></span></p>
+
+            <div th:if="${item.status == 'PENDING'}">
+                <a th:href="@{/get-contact/{id}(id=${item.id})}">
+                    <button style="margin-top: 10px; padding: 8px 15px; border: none; border-radius: 4px; color: white; background-color: #28a745; cursor: pointer;">View Contact Details</button>
+                </a>
+            </div>
+
+            <div th:if="${item.status == 'AWAITING_DELETION'}">
+                <p style="color: #ff9900; font-weight: bold; margin-top: 10px;">Confirmation Pending from Reporter.</p>
+            </div>
         </div>
 
         <div class="item-image">
@@ -114,6 +131,5 @@
 
     <a href="/selection" class="return-button">Return to Dashboard</a>
 </div>
-
 </body>
 </html>
