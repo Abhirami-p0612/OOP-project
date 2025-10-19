@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.List;
 import java.util.UUID;
+import java.util.Optional; // Added for Optional return type in findById
 
 @Repository
 public class FoundItemRepository {
@@ -30,11 +31,11 @@ public class FoundItemRepository {
     @Value("${file.upload-dir:src/main/resources/static/images/found/}")
     private String uploadDir;
 
-    // Save now accepts itemName (new)
-    public int save(String itemName, String description, String location, String contact, String dateFound, MultipartFile image) {
+    // --- UPDATED save method to accept new contact fields ---
+    public int save(String itemName, String description, String location, String contactName, String contactPhone, String contactEmail, String dateFound, MultipartFile image) {
 
         String imagePathForDb = null;
-
+        // ... (Image saving logic remains the same) ...
         if (image != null && !image.isEmpty()) {
             String originalFilename = StringUtils.cleanPath(image.getOriginalFilename());
             String imageName = UUID.randomUUID().toString() + "_" + originalFilename;
@@ -62,10 +63,11 @@ public class FoundItemRepository {
             }
         }
 
-        String sql = "INSERT INTO found_items (item_name, description, location, contact_info, date_found, image_path) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO found_items (item_name, description, location, contact_name, contact_phone, contact_email, date_found, image_path, status) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')"; // Set initial status
         try {
-            return jdbcTemplate.update(sql, itemName, description, location, contact, dateFound, imagePathForDb);
+            // UPDATED Parameters
+            return jdbcTemplate.update(sql, itemName, description, location, contactName, contactPhone, contactEmail, dateFound, imagePathForDb);
         } catch (Exception e) {
             logger.error("Failed to insert found item into DB", e);
             return 0;
@@ -73,25 +75,47 @@ public class FoundItemRepository {
     }
 
     public List<FoundItem> findAll() {
-        String sql = "SELECT id, item_name as itemName, description, location, contact_info as contactInfo, date_found as dateFound, image_path as imagePath FROM found_items";
+        // Note: The fields in SELECT must match the case/style of the fields in FoundItem.java (e.g., item_name AS itemName)
+        String sql = "SELECT id, item_name, description, location, contact_name, contact_phone, contact_email, status, date_found as dateFound, image_path as imagePath FROM found_items WHERE status != 'DELETED'";
         return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(FoundItem.class));
     }
 
-    public FoundItem findById(int id) {
-        String sql = "SELECT id, item_name as itemName, description, location, contact_info as contactInfo, date_found as dateFound, image_path as imagePath FROM found_items WHERE id = ?";
+    public Optional<FoundItem> findById(int id) { // Changed return type to Optional
+        String sql = "SELECT id, item_name, description, location, contact_name, contact_phone, contact_email, status, date_found as dateFound, image_path as imagePath FROM found_items WHERE id = ?";
         List<FoundItem> list = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(FoundItem.class), id);
-        return list.isEmpty() ? null : list.get(0);
+        return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
     }
 
-    // Find a similar found item (used when user reports a lost item)
     public FoundItem findSimilar(String itemName, String description) {
+        // Updated SELECT query to include new contact fields and status
+        String baseSql = "SELECT id, item_name, description, location, contact_name, contact_phone, contact_email, status, date_found as dateFound, image_path as imagePath FROM found_items WHERE status != 'DELETED' AND ";
+
         // First try exact name (case-insensitive), then partial description match
-        String sqlName = "SELECT id, item_name as itemName, description, location, contact_info as contactInfo, date_found as dateFound, image_path as imagePath FROM found_items WHERE LOWER(item_name) = LOWER(?) LIMIT 1";
+        String sqlName = baseSql + "LOWER(item_name) = LOWER(?) LIMIT 1";
         List<FoundItem> byName = jdbcTemplate.query(sqlName, new BeanPropertyRowMapper<>(FoundItem.class), itemName == null ? "" : itemName);
         if (!byName.isEmpty()) return byName.get(0);
 
-        String sqlDesc = "SELECT id, item_name as itemName, description, location, contact_info as contactInfo, date_found as dateFound, image_path as imagePath FROM found_items WHERE LOWER(description) LIKE LOWER(?) LIMIT 1";
+        String sqlDesc = baseSql + "LOWER(description) LIKE LOWER(?) LIMIT 1";
         List<FoundItem> byDesc = jdbcTemplate.query(sqlDesc, new BeanPropertyRowMapper<>(FoundItem.class), "%" + (description == null ? "" : description) + "%");
         return byDesc.isEmpty() ? null : byDesc.get(0);
+    }
+    public List<FoundItem> findByReporterAndStatus(String email, String status) {
+        String sql = "SELECT * FROM found_items WHERE contact_email = ? AND status = ?";
+        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(FoundItem.class), email, status);
+    }
+
+
+
+    // --- NEW: Method to update item status ---
+    // 1. Method to update item status (for step 1: Lost Person confirms receipt)
+    public int updateStatus(int id, String newStatus) {
+        String sql = "UPDATE found_items SET status = ? WHERE id = ?";
+        return jdbcTemplate.update(sql, newStatus, id);
+    }
+
+    // 2. Method to delete item (for step 2: Reporter confirms deletion)
+    public int deleteById(int id) {
+        String sql = "DELETE FROM found_items WHERE id = ?";
+        return jdbcTemplate.update(sql, id);
     }
 }

@@ -70,6 +70,59 @@
             display: block;
         }
 
+        /* Popup message styling */
+        .popup {
+            position: fixed;
+            top: 20px;                  /* distance from the top of the viewport */
+            left: 50%;                  /* start from horizontal center */
+            transform: translateX(-50%); /* shift left by half its width */
+            max-width: 90%;             /* optional: prevent overflow on small screens */
+            text-align: center;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-weight: bold;
+            animation: fadeInOut 4s ease-in-out forwards;
+            z-index: 1000;
+        }
+
+        .popup.error {
+            background: #f44336;
+        }
+
+        .popup.warning {
+            background: #ff9800;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-10px); }
+            10%, 90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            margin: 10px 0;
+        }
+
+        button.confirm-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button.confirm-btn:hover {
+            background-color: darkred;
+        }
         .btn:hover { background-color: #0056b3; transform: scale(1.03); }
 
     </style>
@@ -77,12 +130,28 @@
 <body>
 
 <div class="wrapper">
+
+    <!-- Popup Messages -->
+    <div th:if="${message}" th:text="${message}" class="popup"></div>
+    <div th:if="${error}" th:text="${error}" class="popup error"></div>
+    <div th:if="${awaitingMessage}" th:text="${awaitingMessage}" class="popup warning"></div>
+
     <div class="welcome">
         Welcome <span th:text="${username}">User</span>
     </div>
 
-    <p th:if="${message}" th:text="${message}" class="message"></p>
-    <p th:if="${error}" th:text="${error}" class="error"></p>
+    <!-- Awaiting Deletion Items -->
+    <div th:if="${awaitingItems}">
+        <h3 style="color: #23395d;">Pending Deletion Items:</h3>
+        <ul>
+            <li th:each="item : ${awaitingItems}">
+                <span th:text="${item.itemName}"></span>
+                <form th:action="@{/confirm-item-deleted/{id}(id=${item.id})}" method="post" style="display:inline;">
+                    <button type="submit" class="confirm-btn">Confirm Delete</button>
+                </form>
+            </li>
+        </ul>
+    </div>
 
     <div class="main-container">
         <div class="section">
@@ -101,6 +170,7 @@
             </div>
         </div>
     </div>
+
 </div>
 
 </body>

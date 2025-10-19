@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
+import java.util.Optional; // Added for Optional return from Repository
+
 @Controller
 public class HomeController {
 
@@ -71,17 +74,33 @@ public class HomeController {
             return "redirect:/index";
         }
 
+        // Get stored password
         String stored = userRepository.getPasswordByEmail(email);
         if (stored == null || !stored.equals(password)) {
             model.addAttribute("error", "Incorrect password. Please try again.");
             return "login";
         }
 
-        // Successful login -> set session and go to dashboard
+        // Successful login -> set session
         session.setAttribute("username", email);
         model.addAttribute("username", email);
-        return "selection";
+
+        // --- Notification logic start ---
+        // Fetch pending notification for this user (if any)
+        String notification = userRepository.getNotification(email);
+        if (notification != null && !notification.isEmpty()) {
+            // Use FlashAttribute to show popup in selection.html
+            redirectAttributes.addFlashAttribute("message", notification);
+
+            // Clear the notification so it shows only once
+            userRepository.clearNotification(email);
+        }
+        // --- Notification logic end ---
+
+        // Redirect to selection page so that flash attributes are available
+        return "redirect:/selection";
     }
+
 
     // --- Pages for navigation ---
     @GetMapping("/report-found")
@@ -96,6 +115,7 @@ public class HomeController {
 
     @GetMapping("/view-found")
     public String viewFoundPage(@RequestParam(value = "highlightId", required = false) Integer highlightId, Model model) {
+        // Only fetch items that are not marked as DELETED
         model.addAttribute("foundItems", foundItemRepository.findAll());
         model.addAttribute("highlightId", highlightId);
         return "view-found";  // templates/view-found.html
@@ -110,60 +130,46 @@ public class HomeController {
 
     @GetMapping("/selection")
     public String selectionPage(HttpSession session, Model model) {
-        // Pull username from session if present
-        Object username = session.getAttribute("username");
+        String username = (String) session.getAttribute("username");
+
         if (username != null) {
-            model.addAttribute("username", username.toString());
+            model.addAttribute("username", username);
+
+            // Fetch items reported by this user that are awaiting deletion
+            List<FoundItem> awaitingItems = foundItemRepository.findByReporterAndStatus(username, "AWAITING_DELETION");
+
+            if (!awaitingItems.isEmpty()) {
+                model.addAttribute("awaitingItems", awaitingItems);
+            }
         }
-        return "selection"; // templates/selection.html
+
+        return "selection";
     }
 
+
+
     // --- Handle Lost Report ---
-    @PostMapping("/report-lost")
-    public String handleReportLost(
-            @RequestParam("itemName") String itemName,
+    @PostMapping("/report-found")
+    public String handleReportFound(
+            @RequestParam(value = "itemName", required = false) String itemName,
             @RequestParam("description") String description,
             @RequestParam("location") String location,
-            @RequestParam("contact") String contact,
-            @RequestParam("dateLost") String dateLost,
+            @RequestParam("contactName") String contactName,     // NEW
+            @RequestParam("contactPhone") String contactPhone,   // NEW
+            @RequestParam("contactEmail") String contactEmail,   // NEW
+            @RequestParam("dateFound") String dateFound,
             @RequestParam(value = "image", required = false) MultipartFile image,
             Model model) {
 
         try {
-            int rowsAffected = lostItemRepository.save(itemName, description, location, contact, dateLost, image);
-
-            // After saving, check for a similar found item and redirect if found
-            FoundItem match = foundItemRepository.findSimilar(itemName, description);
-            if (match != null) {
-                model.addAttribute("message", "We found a similar item reported as FOUND. Redirecting you to the item...");
-                return "redirect:/view-found?highlightId=" + match.getId();
+            // Validate 10-digit phone number (redundant if HTML pattern is used, but good server-side practice)
+            if (!contactPhone.matches("\\d{10}")) {
+                model.addAttribute("error", "Phone number must be exactly 10 digits.");
+                return "report-found";
             }
 
-            if (rowsAffected > 0) {
-                model.addAttribute("message", "Item reported successfully!");
-                return "selection";
-            } else {
-                model.addAttribute("error", "Failed to save the item. Please try again.");
-                return "report-lost";
-            }
-        } catch (Exception e) {
-            model.addAttribute("error", "An unexpected error occurred: " + e.getMessage());
-            return "report-lost";
-        }
-    }
-
-
-    // --- Handle Found Report ---
-    @PostMapping("/report-found")
-    public String handleReportFound(@RequestParam(value = "itemName", required = false) String itemName,
-                                    @RequestParam("description") String description,
-                                    @RequestParam("location") String location,
-                                    @RequestParam("contact") String contact,
-                                    @RequestParam("dateFound") String dateFound,
-                                    @RequestParam(value = "image", required = false) MultipartFile image,
-                                    Model model) {
-        try {
-            int rowsAffected = foundItemRepository.save(itemName, description, location, contact, dateFound, image);
+            // Call updated save method with new contact fields
+            int rowsAffected = foundItemRepository.save(itemName, description, location, contactName, contactPhone, contactEmail, dateFound, image);
 
             // After saving, check for a similar lost item and redirect if found
             LostItem match = lostItemRepository.findSimilar(itemName, description);
@@ -183,5 +189,48 @@ public class HomeController {
             model.addAttribute("error", "Error: " + e.getMessage());
             return "report-found";
         }
+    }
+
+    // --- NEW: Endpoint to Display Contact Details ---
+    @GetMapping("/get-contact/{id}")
+    public String getContactDetails(@PathVariable Integer id, Model model, RedirectAttributes redirectAttributes) {
+        Optional<FoundItem> itemOptional = foundItemRepository.findById(id);
+
+        if (itemOptional.isPresent()) {
+            model.addAttribute("item", itemOptional.get());
+            return "contact-details"; // templates/contact-details.html
+        } else {
+            redirectAttributes.addFlashAttribute("error", "Item not found.");
+            return "redirect:/view-found";
+        }
+    }
+
+    // HomeController.java - UPDATED confirmItemReceived
+    @PostMapping("/confirm-item-received/{id}")
+    public String confirmItemReceived(@PathVariable int id, RedirectAttributes redirectAttributes) {
+        Optional<FoundItem> itemOpt = foundItemRepository.findById(id);
+        if (itemOpt.isPresent()) {
+            FoundItem item = itemOpt.get();
+
+            // Update the item status to awaiting deletion
+            foundItemRepository.updateStatus(id, "AWAITING_DELETION");
+
+            // Store notification for the reporter (Person A)
+            userRepository.saveNotification(item.getContactEmail(),
+                    "Your reported item '" + item.getItemName() + "' has been confirmed by the receiver.");
+
+            redirectAttributes.addFlashAttribute("message",
+                    "The item will be deleted after confirmation by the reporter.");
+        }
+        return "redirect:/view-found";
+    }
+
+
+    // --- NEW: Reported Person Confirms Deletion (Status: AWAITING_DELETION -> DELETED / DELETE) ---
+    @PostMapping("/confirm-item-deleted/{id}")
+    public String confirmItemDeleted(@PathVariable int id, RedirectAttributes redirectAttributes) {
+        foundItemRepository.deleteById(id);
+        redirectAttributes.addFlashAttribute("message", "Item successfully removed from the list!");
+        return "redirect:/selection";
     }
 }

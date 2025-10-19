@@ -28,4 +28,21 @@ public class UserRepository {
             return null;
         }
     }
+    public void saveNotification(String email, String message) {
+        String sql = "UPDATE users SET notification_message = ? WHERE email = ?";
+        jdbcTemplate.update(sql, message, email);
+    }
+    // Get pending notification for a user
+    public String getNotification(String email) {
+        String sql = "SELECT notification_message FROM users WHERE email = ?";
+        return jdbcTemplate.queryForObject(sql, String.class, email);
+    }
+
+    // Clear notification after showing it once
+    public void clearNotification(String email) {
+        String sql = "UPDATE users SET notification_message = NULL WHERE email = ?";
+        jdbcTemplate.update(sql, email);
+    }
+
+
 }
