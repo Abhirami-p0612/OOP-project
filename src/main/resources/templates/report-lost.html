@@ -52,6 +52,7 @@
 
         .message { color: green; text-align: center; margin-bottom: 15px; font-weight: bold; }
         .error { color: red; text-align: center; margin-bottom: 15px; font-weight: bold; }
+        h3 { margin-top: 20px; color: #555; }
     </style>
 </head>
 <body>
@@ -59,7 +60,6 @@
 <div class="container">
     <h2>Report Lost Item</h2>
 
-    <!-- Messages -->
     <p th:if="${message}" th:text="${message}" class="message"></p>
     <p th:if="${error}" th:text="${error}" class="error"></p>
 
@@ -73,16 +73,26 @@
         <label for="location">Lost Location:</label>
         <input type="text" id="location" name="location" required>
 
-        <label for="contact">Your Contact Info:</label>
-        <input type="text" id="contact" name="contact" required>
-
         <label for="dateLost">Date Lost:</label>
         <input type="date" id="dateLost" name="dateLost" required>
 
         <label for="image">Upload Image of Item (optional):</label>
         <input type="file" id="image" name="image" accept="image/*">
 
-        <button type="submit">Submit Report</button>
+        <section id="contact-details">
+            <h3>Your Contact Details</h3>
+
+            <label for="contactName">Name:</label>
+            <input type="text" id="contactName" name="contactName" required>
+
+            <label for="contactPhone">Phone:</label>
+            <input type="text" id="contactPhone" name="contactPhone" pattern="\d{10}" placeholder="10-digit phone" required>
+
+            <label for="contactEmail">Email:</label>
+            <input type="email" id="contactEmail" name="contactEmail" required>
+        </section>
+
+        <button type="submit">Submit Lost Report</button>
     </form>
 </div>
 

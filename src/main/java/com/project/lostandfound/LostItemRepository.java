@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -30,13 +31,16 @@ public class LostItemRepository {
     @Value("${file.upload-dir:src/main/resources/static/images/lost/}")
     private String uploadDir;
 
-    public int save(String itemName, String description, String location, String contact, String dateLost, MultipartFile image) {
+    // --- Save lost item ---
+    public int save(String itemName, String description, String location,
+                    String contactName, String contactPhone, String contactEmail,
+                    String dateLost, MultipartFile image) {
 
         String imagePathForDb = null;
 
         if (image != null && !image.isEmpty()) {
             String originalFilename = StringUtils.cleanPath(image.getOriginalFilename());
-            String imageName = UUID.randomUUID().toString() + "_" + originalFilename;
+            String imageName = UUID.randomUUID() + "_" + originalFilename;
 
             Path uploadPath;
             try {
@@ -45,14 +49,13 @@ public class LostItemRepository {
                 logger.error("Failed to get upload directory path", e);
                 return 0;
             }
+
             try {
                 if (!Files.exists(uploadPath)) {
                     Files.createDirectories(uploadPath);
                 }
-
                 Path filePath = uploadPath.resolve(imageName);
                 Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
                 imagePathForDb = "/images/lost/" + imageName;
             } catch (IOException e) {
                 logger.error("Failed to save uploaded file", e);
@@ -60,35 +63,66 @@ public class LostItemRepository {
             }
         }
 
-        String sql = "INSERT INTO lost_items (item_name, description, location, contact_info, date_lost, image_path) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
-        try {
-            return jdbcTemplate.update(sql, itemName, description, location, contact, dateLost, imagePathForDb);
-        } catch (Exception e) {
-            logger.error("Failed to insert lost item into DB", e);
-            return 0;
-        }
+        String sql = "INSERT INTO lost_items " +
+                "(item_name, description, location, contact_name, contact_phone, contact_email, status, date_lost, image_path) " +
+                "VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, ?)";
+        return jdbcTemplate.update(sql, itemName, description, location, contactName, contactPhone, contactEmail, dateLost, imagePathForDb);
     }
 
+    // --- Find all lost items ---
     public List<LostItem> findAll() {
-        String sql = "SELECT id, item_name as itemName, description, location, contact_info as contactInfo, date_lost as dateLost, image_path as imagePath FROM lost_items";
+        String sql = "SELECT id, item_name as itemName, description, location, " +
+                "contact_name as contactName, contact_phone as contactPhone, contact_email as contactEmail, " +
+                "status, date_lost as dateLost, image_path as imagePath FROM lost_items";
         return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(LostItem.class));
     }
 
-    public LostItem findById(int id) {
-        String sql = "SELECT id, item_name as itemName, description, location, contact_info as contactInfo, date_lost as dateLost, image_path as imagePath FROM lost_items WHERE id = ?";
+    // --- Find by ID (returns Optional to match FoundItemRepository) ---
+    public Optional<LostItem> findById(int id) {
+        String sql = "SELECT id, item_name as itemName, description, location, contact_name as contactName, " +
+                "contact_phone as contactPhone, contact_email as contactEmail, status, date_lost as dateLost, image_path as imagePath " +
+                "FROM lost_items WHERE id = ?";
         List<LostItem> list = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(LostItem.class), id);
-        return list.isEmpty() ? null : list.get(0);
+        return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
     }
 
-    // Find a similar lost item (used when user reports a found item)
+    // --- Find similar lost item (used when reporting found) ---
     public LostItem findSimilar(String itemName, String description) {
-        String sqlName = "SELECT id, item_name as itemName, description, location, contact_info as contactInfo, date_lost as dateLost, image_path as imagePath FROM lost_items WHERE LOWER(item_name) = LOWER(?) LIMIT 1";
-        List<LostItem> byName = jdbcTemplate.query(sqlName, new BeanPropertyRowMapper<>(LostItem.class), itemName == null ? "" : itemName);
+        String sqlName = "SELECT id, item_name as itemName, description, location, " +
+                "contact_name as contactName, contact_phone as contactPhone, contact_email as contactEmail, " +
+                "status, date_lost as dateLost, image_path as imagePath " +
+                "FROM lost_items WHERE LOWER(item_name) = LOWER(?) LIMIT 1";
+        List<LostItem> byName = jdbcTemplate.query(sqlName, new BeanPropertyRowMapper<>(LostItem.class),
+                itemName == null ? "" : itemName);
         if (!byName.isEmpty()) return byName.get(0);
 
-        String sqlDesc = "SELECT id, item_name as itemName, description, location, contact_info as contactInfo, date_lost as dateLost, image_path as imagePath FROM lost_items WHERE LOWER(description) LIKE LOWER(?) LIMIT 1";
-        List<LostItem> byDesc = jdbcTemplate.query(sqlDesc, new BeanPropertyRowMapper<>(LostItem.class), "%" + (description == null ? "" : description) + "%");
+        String sqlDesc = "SELECT id, item_name as itemName, description, location, " +
+                "contact_name as contactName, contact_phone as contactPhone, contact_email as contactEmail, " +
+                "status, date_lost as dateLost, image_path as imagePath " +
+                "FROM lost_items WHERE LOWER(description) LIKE LOWER(?) LIMIT 1";
+        List<LostItem> byDesc = jdbcTemplate.query(sqlDesc, new BeanPropertyRowMapper<>(LostItem.class),
+                "%" + (description == null ? "" : description) + "%");
         return byDesc.isEmpty() ? null : byDesc.get(0);
+
     }
+    public List<LostItem> findByReporterAndStatus(String email, String status) {
+        String sql = "SELECT id, item_name as itemName, description, location, " +
+                "contact_name as contactName, contact_phone as contactPhone, contact_email as contactEmail, " +
+                "status, date_lost as dateLost, image_path as imagePath " +
+                "FROM lost_items WHERE contact_email = ? AND status = ?";
+        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(LostItem.class), email, status);
+    }
+
+
+
+    // --- Update status ---
+    public int updateStatus(int id, String status) {
+        String sql = "UPDATE lost_items SET status = ? WHERE id = ?";
+        return jdbcTemplate.update(sql, status, id);
+    }
+    public int deleteById(int id) {
+        String sql = "DELETE FROM lost_items WHERE id = ?";
+        return jdbcTemplate.update(sql, id);
+    }
+
 }

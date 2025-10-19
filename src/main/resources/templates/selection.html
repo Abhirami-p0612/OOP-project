@@ -141,17 +141,32 @@
     </div>
 
     <!-- Awaiting Deletion Items -->
-    <div th:if="${awaitingItems}">
-        <h3 style="color: #23395d;">Pending Deletion Items:</h3>
+    <!-- Awaiting Found Items -->
+    <div th:if="${awaitingFound}">
+        <h3 style="color: #23395d;">Your Found Items Pending Deletion:</h3>
         <ul>
-            <li th:each="item : ${awaitingItems}">
+            <li th:each="item : ${awaitingFound}">
                 <span th:text="${item.itemName}"></span>
-                <form th:action="@{/confirm-item-deleted/{id}(id=${item.id})}" method="post" style="display:inline;">
+                <form th:action="@{/confirm-found-item-deletion/{id}(id=${item.id})}" method="post" style="display:inline;">
                     <button type="submit" class="confirm-btn">Confirm Delete</button>
                 </form>
             </li>
         </ul>
     </div>
+
+    <!-- Awaiting Lost Items -->
+    <div th:if="${awaitingLost}">
+        <h3 style="color: #23395d;">Your Lost Items Pending Deletion:</h3>
+        <ul>
+            <li th:each="item : ${awaitingLost}">
+                <span th:text="${item.itemName}"></span>
+                <form th:action="@{/confirm-lost-item-deletion/{id}(id=${item.id})}" method="post" style="display:inline;">
+                    <button type="submit" class="confirm-btn">Confirm Delete</button>
+                </form>
+            </li>
+        </ul>
+    </div>
+
 
     <div class="main-container">
         <div class="section">

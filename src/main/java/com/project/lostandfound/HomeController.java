@@ -9,43 +9,43 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
-import java.util.Optional; // Added for Optional return from Repository
+import java.util.Optional;
 
 @Controller
 public class HomeController {
 
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private LostItemRepository lostItemRepository;
+
     @Autowired
     private FoundItemRepository foundItemRepository;
 
+    // --- Home & Index ---
     @GetMapping({"/", "/index"})
     public String indexPage() {
-        return "index";          // templates/index.html
+        return "index";
     }
 
+    // --- Signup ---
     @PostMapping("/signup")
-    public String handleSignUp(
-            @RequestParam String email,
-            @RequestParam String password,
-            Model model,
-            HttpSession session,
-            RedirectAttributes redirectAttributes) {
+    public String handleSignUp(@RequestParam String email,
+                               @RequestParam String password,
+                               Model model,
+                               HttpSession session,
+                               RedirectAttributes redirectAttributes) {
 
-        // If email already exists, redirect to login with message
         if (userRepository.existsByEmail(email)) {
             redirectAttributes.addFlashAttribute("message", "This email has an account already. Please login");
             return "redirect:/login";
         }
 
         int rowsAffected = userRepository.save(email, password);
-
         if (rowsAffected > 0) {
-            // Save email in session and go to dashboard
             session.setAttribute("username", email);
-            model.addAttribute("username", email); // Pass username to next page
+            model.addAttribute("username", email);
             return "selection";
         } else {
             model.addAttribute("error", "Failed to create account. Please try again.");
@@ -53,128 +53,115 @@ public class HomeController {
         }
     }
 
-    // --- Login GET (shows login page) ---
+    // --- Login GET ---
     @GetMapping("/login")
     public String loginPage() {
-        return "login";  // templates/login.html
+        return "login";
     }
 
-    // --- Handle Login POST ---
+    // --- Login POST ---
     @PostMapping("/handle-login")
-    public String handleLogin(
-            @RequestParam String email,
-            @RequestParam String password,
-            Model model,
-            HttpSession session,
-            RedirectAttributes redirectAttributes) {
+    public String handleLogin(@RequestParam String email,
+                              @RequestParam String password,
+                              Model model,
+                              HttpSession session,
+                              RedirectAttributes redirectAttributes) {
 
-        // If email doesn't exist, redirect to signup with message
         if (!userRepository.existsByEmail(email)) {
             redirectAttributes.addFlashAttribute("error", "Account doesn't exist. Please sign up first.");
             return "redirect:/index";
         }
 
-        // Get stored password
         String stored = userRepository.getPasswordByEmail(email);
         if (stored == null || !stored.equals(password)) {
             model.addAttribute("error", "Incorrect password. Please try again.");
             return "login";
         }
 
-        // Successful login -> set session
         session.setAttribute("username", email);
         model.addAttribute("username", email);
 
-        // --- Notification logic start ---
-        // Fetch pending notification for this user (if any)
+        // --- Notification logic ---
         String notification = userRepository.getNotification(email);
         if (notification != null && !notification.isEmpty()) {
-            // Use FlashAttribute to show popup in selection.html
             redirectAttributes.addFlashAttribute("message", notification);
-
-            // Clear the notification so it shows only once
             userRepository.clearNotification(email);
         }
-        // --- Notification logic end ---
 
-        // Redirect to selection page so that flash attributes are available
         return "redirect:/selection";
     }
 
-
-    // --- Pages for navigation ---
+    // --- Navigation Pages ---
     @GetMapping("/report-found")
     public String reportFoundPage() {
-        return "report-found";  // templates/report-found.html
+        return "report-found";
     }
 
     @GetMapping("/report-lost")
     public String reportLostPage() {
-        return "report-lost";  // templates/report-lost.html
+        return "report-lost";
     }
 
     @GetMapping("/view-found")
-    public String viewFoundPage(@RequestParam(value = "highlightId", required = false) Integer highlightId, Model model) {
-        // Only fetch items that are not marked as DELETED
+    public String viewFoundPage(@RequestParam(value = "highlightId", required = false) Integer highlightId,
+                                Model model,
+                                HttpSession session) {
         model.addAttribute("foundItems", foundItemRepository.findAll());
         model.addAttribute("highlightId", highlightId);
-        return "view-found";  // templates/view-found.html
+        model.addAttribute("username", session.getAttribute("username"));
+        return "view-found";
     }
 
     @GetMapping("/view-lost")
-    public String viewLostPage(@RequestParam(value = "highlightId", required = false) Integer highlightId, Model model) {
+    public String viewLostPage(@RequestParam(value = "highlightId", required = false) Integer highlightId,
+                               Model model,
+                               HttpSession session) {
         model.addAttribute("items", lostItemRepository.findAll());
         model.addAttribute("highlightId", highlightId);
-        return "view-lost";  // templates/view-lost.html
+        model.addAttribute("username", session.getAttribute("username"));
+        return "view-lost";
     }
 
     @GetMapping("/selection")
     public String selectionPage(HttpSession session, Model model) {
         String username = (String) session.getAttribute("username");
-
         if (username != null) {
             model.addAttribute("username", username);
 
-            // Fetch items reported by this user that are awaiting deletion
-            List<FoundItem> awaitingItems = foundItemRepository.findByReporterAndStatus(username, "AWAITING_DELETION");
+            List<FoundItem> awaitingFound = foundItemRepository.findByReporterAndStatus(username, "AWAITING_DELETION");
+            List<LostItem> awaitingLost = lostItemRepository.findByReporterAndStatus(username, "AWAITING_DELETION");
 
-            if (!awaitingItems.isEmpty()) {
-                model.addAttribute("awaitingItems", awaitingItems);
-            }
+            model.addAttribute("awaitingFound", awaitingFound);
+            model.addAttribute("awaitingLost", awaitingLost);
         }
-
         return "selection";
     }
 
 
 
-    // --- Handle Lost Report ---
-    @PostMapping("/report-found")
-    public String handleReportFound(
-            @RequestParam(value = "itemName", required = false) String itemName,
-            @RequestParam("description") String description,
-            @RequestParam("location") String location,
-            @RequestParam("contactName") String contactName,     // NEW
-            @RequestParam("contactPhone") String contactPhone,   // NEW
-            @RequestParam("contactEmail") String contactEmail,   // NEW
-            @RequestParam("dateFound") String dateFound,
-            @RequestParam(value = "image", required = false) MultipartFile image,
-            Model model) {
 
+    // --- Handle Found Report POST ---
+    @PostMapping("/report-found")
+    public String handleReportFound(@RequestParam(value = "itemName", required = false) String itemName,
+                                    @RequestParam("description") String description,
+                                    @RequestParam("location") String location,
+                                    @RequestParam("contactName") String contactName,
+                                    @RequestParam("contactPhone") String contactPhone,
+                                    @RequestParam("contactEmail") String contactEmail,
+                                    @RequestParam("dateFound") String dateFound,
+                                    @RequestParam(value = "image", required = false) MultipartFile image,
+                                    Model model) {
         try {
-            // Validate 10-digit phone number (redundant if HTML pattern is used, but good server-side practice)
             if (!contactPhone.matches("\\d{10}")) {
                 model.addAttribute("error", "Phone number must be exactly 10 digits.");
                 return "report-found";
             }
 
-            // Call updated save method with new contact fields
-            int rowsAffected = foundItemRepository.save(itemName, description, location, contactName, contactPhone, contactEmail, dateFound, image);
+            int rowsAffected = foundItemRepository.save(itemName, description, location, contactName,
+                    contactPhone, contactEmail, dateFound, image);
 
-            // After saving, check for a similar lost item and redirect if found
             LostItem match = lostItemRepository.findSimilar(itemName, description);
             if (match != null) {
-                model.addAttribute("message", "We found a similar item reported as LOST. Redirecting you to the item...");
                 return "redirect:/view-lost?highlightId=" + match.getId();
             }
 
@@ -185,40 +172,76 @@ public class HomeController {
                 model.addAttribute("error", "Failed to save the found item.");
                 return "report-found";
             }
+
         } catch (Exception e) {
             model.addAttribute("error", "Error: " + e.getMessage());
             return "report-found";
         }
     }
 
-    // --- NEW: Endpoint to Display Contact Details ---
+    // --- Handle Lost Report POST ---
+    @PostMapping("/report-lost")
+    public String handleReportLost(
+            @RequestParam("itemName") String itemName,
+            @RequestParam("description") String description,
+            @RequestParam("location") String location,
+            @RequestParam("contactName") String contactName,
+            @RequestParam("contactPhone") String contactPhone,
+            @RequestParam("contactEmail") String contactEmail,
+            @RequestParam("dateLost") String dateLost,
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            Model model) {
+
+        try {
+            if (!contactPhone.matches("\\d{10}")) {
+                model.addAttribute("error", "Phone number must be exactly 10 digits.");
+                return "report-lost";
+            }
+
+            int rowsAffected = lostItemRepository.save(itemName, description, location,
+                    contactName, contactPhone, contactEmail, dateLost, image);
+
+            FoundItem match = foundItemRepository.findSimilar(itemName, description);
+            if (match != null) {
+                return "redirect:/view-found?highlightId=" + match.getId();
+            }
+
+            if (rowsAffected > 0) {
+                model.addAttribute("message", "Lost item reported successfully!");
+                return "selection";
+            } else {
+                model.addAttribute("error", "Failed to save the lost item. Please try again.");
+                return "report-lost";
+            }
+
+        } catch (Exception e) {
+            model.addAttribute("error", "An unexpected error occurred: " + e.getMessage());
+            return "report-lost";
+        }
+    }
+
+    // --- Get Contact Details for Found Item ---
     @GetMapping("/get-contact/{id}")
     public String getContactDetails(@PathVariable Integer id, Model model, RedirectAttributes redirectAttributes) {
         Optional<FoundItem> itemOptional = foundItemRepository.findById(id);
-
         if (itemOptional.isPresent()) {
             model.addAttribute("item", itemOptional.get());
-            return "contact-details"; // templates/contact-details.html
+            return "contact-details";
         } else {
             redirectAttributes.addFlashAttribute("error", "Item not found.");
             return "redirect:/view-found";
         }
     }
 
-    // HomeController.java - UPDATED confirmItemReceived
+    // --- Confirm Found Item Received ---
     @PostMapping("/confirm-item-received/{id}")
     public String confirmItemReceived(@PathVariable int id, RedirectAttributes redirectAttributes) {
         Optional<FoundItem> itemOpt = foundItemRepository.findById(id);
         if (itemOpt.isPresent()) {
             FoundItem item = itemOpt.get();
-
-            // Update the item status to awaiting deletion
             foundItemRepository.updateStatus(id, "AWAITING_DELETION");
-
-            // Store notification for the reporter (Person A)
             userRepository.saveNotification(item.getContactEmail(),
                     "Your reported item '" + item.getItemName() + "' has been confirmed by the receiver.");
-
             redirectAttributes.addFlashAttribute("message",
                     "The item will be deleted after confirmation by the reporter.");
         }
@@ -226,45 +249,62 @@ public class HomeController {
     }
 
 
-    // --- NEW: Reported Person Confirms Deletion (Status: AWAITING_DELETION -> DELETED / DELETE) ---
-    @PostMapping("/confirm-item-deleted/{id}")
-    public String confirmItemDeleted(@PathVariable int id, RedirectAttributes redirectAttributes) {
-        foundItemRepository.deleteById(id);
-        redirectAttributes.addFlashAttribute("message", "Item successfully removed from the list!");
+    // --- Confirm Lost Item Received ---
+    @PostMapping("/confirm-lost-item-received/{id}")
+    public String confirmLostItemReceived(@PathVariable int id, RedirectAttributes redirectAttributes) {
+        Optional<LostItem> itemOpt = lostItemRepository.findById(id);
+        if (itemOpt.isPresent()) {
+            LostItem item = itemOpt.get();
+            lostItemRepository.updateStatus(id, "AWAITING_DELETION");
+            userRepository.saveNotification(item.getContactEmail(),
+                    "Your reported lost item '" + item.getItemName() + "' has been confirmed as received by the owner.");
+            redirectAttributes.addFlashAttribute("message",
+                    "The item will be deleted after confirmation by the reporter.");
+        }
+        return "redirect:/view-lost";
+    }
+
+    // --- Confirm Found Item Deletion ---
+    @PostMapping("/confirm-found-item-deletion/{id}")
+    public String confirmFoundItemDeletion(@PathVariable int id, HttpSession session, RedirectAttributes redirectAttributes) {
+        String username = (String) session.getAttribute("username");
+        Optional<FoundItem> itemOpt = foundItemRepository.findById(id);
+
+        if (itemOpt.isPresent() && itemOpt.get().getContactEmail().equals(username)) { // reporter check
+            foundItemRepository.deleteById(id);
+            redirectAttributes.addFlashAttribute("message", "Found item successfully removed!");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "You are not authorized to delete this item.");
+        }
         return "redirect:/selection";
     }
-    // --- Handle Lost Report ---
-    @PostMapping("/report-lost")
-    public String handleReportLost(
-            @RequestParam("itemName") String itemName,
-            @RequestParam("description") String description,
-            @RequestParam("location") String location,
-            @RequestParam("contact") String contact,
-            @RequestParam("dateLost") String dateLost,
-            @RequestParam(value = "image", required = false) MultipartFile image,
-            Model model) {
 
-        try {
-            int rowsAffected = lostItemRepository.save(itemName, description, location, contact, dateLost, image);
+    // --- Get Contact Details for Lost Item ---
+    @GetMapping("/get-lost-contact/{id}")
+    public String getLostContact(@PathVariable Integer id, Model model, RedirectAttributes redirectAttributes) {
+        Optional<LostItem> itemOptional = lostItemRepository.findById(id);
 
-            // After saving, check for a similar found item and redirect if found
-            FoundItem match = foundItemRepository.findSimilar(itemName, description);
-            if (match != null) {
-                model.addAttribute("message", "We found a similar item reported as FOUND. Redirecting you to the item...");
-                return "redirect:/view-found?highlightId=" + match.getId();
-            }
-
-            if (rowsAffected > 0) {
-                model.addAttribute("message", "Item reported successfully!");
-                return "selection";
-            } else {
-                model.addAttribute("error", "Failed to save the item. Please try again.");
-                return "report-lost";
-            }
-        } catch (Exception e) {
-            model.addAttribute("error", "An unexpected error occurred: " + e.getMessage());
-            return "report-lost";
+        if (itemOptional.isPresent()) {
+            model.addAttribute("item", itemOptional.get());
+            return "contact-lost";
+        } else {
+            redirectAttributes.addFlashAttribute("error", "Item not found.");
+            return "redirect:/view-lost";
         }
+    }
+    // --- Confirm Lost Item Deletion ---
+    @PostMapping("/confirm-lost-item-deletion/{id}")
+    public String confirmLostItemDeletion(@PathVariable int id, HttpSession session, RedirectAttributes redirectAttributes) {
+        String username = (String) session.getAttribute("username");
+        Optional<LostItem> itemOpt = lostItemRepository.findById(id);
+
+        if (itemOpt.isPresent() && itemOpt.get().getContactEmail().equals(username)) { // reporter check
+            lostItemRepository.deleteById(id);
+            redirectAttributes.addFlashAttribute("message", "Lost item successfully removed!");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "You are not authorized to delete this item.");
+        }
+        return "redirect:/selection";
     }
 
 }

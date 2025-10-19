@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Lost Item Contact Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fc;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 30px;
+            margin-top: 50px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h2 {
+            color: #007BFF;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 1.1em;
+            margin: 10px 0;
+        }
+
+        strong {
+            display: inline-block;
+            width: 150px;
+            text-align: left;
+        }
+
+        .confirmation-button {
+            display: inline-block;
+            margin-top: 25px;
+        }
+
+        .confirmation-button button {
+            padding: 12px 25px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #28a745;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .confirmation-button button:hover {
+            background-color: #1e7e34;
+        }
+
+        .note {
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #cc0000;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" th:if="${item}">
+    <h2>Contact Details for Lost Item:</h2>
+    <p><strong>Item Name:</strong> <span th:text="${item.itemName}"></span></p>
+    <p><strong>Reporter Name:</strong> <span th:text="${item.contactName}"></span></p>
+    <p><strong>Phone Number:</strong> <span th:text="${item.contactPhone}"></span></p>
+    <p><strong>Email:</strong> <span th:text="${item.contactEmail}"></span></p>
+    <p><strong>Location:</strong> <span th:text="${item.location}"></span></p>
+    <p><strong>Date Lost:</strong> <span th:text="${item.dateLost}"></span></p>
+
+    <div class="confirmation-button">
+        <form th:action="@{/confirm-lost-item-received/{id}(id=${item.id})}" method="post">
+            <button type="submit">Confirm Item Received</button>
+        </form>
+    </div>
+
+    <p class="note">
+        *Note: Clicking the button will notify the reporter. They may confirm the handover.
+    </p>
+</div>
+
+<div th:if="${item == null}">
+    <p>Lost item not found.</p>
+</div>
+
+</body>
+</html>
+

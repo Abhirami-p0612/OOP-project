@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta charset="UTF-8">
     <title>View Lost Items</title>
     <style>
         body {
@@ -20,13 +21,29 @@
         }
         h1 { text-align: center; color: #23395d; }
 
-        .item-card { display: flex; align-items: center; border-bottom: 1px solid #eee; padding: 15px 0; justify-content: space-between; }
-        .item-card.highlight { border: 2px solid #ffcc00; background: #fff9e6; padding: 14px; border-radius: 6px; }
+        .item-card {
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
+            justify-content: space-between;
+        }
+        .item-card.highlight {
+            border: 2px solid #ffcc00;
+            background: #fff9e6;
+            padding: 14px;
+            border-radius: 6px;
+        }
 
         .item-details { flex-grow: 1; }
         .item-image { margin-left: 20px; flex-shrink: 0; }
 
-        .item-image img { max-width: 150px; height: auto; border-radius: 8px; border: 1px solid #ddd; }
+        .item-image img {
+            max-width: 150px;
+            height: auto;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
 
         .no-image {
             width: 150px;
@@ -52,6 +69,20 @@
             text-decoration: none;
             cursor: pointer;
         }
+
+        .message { color: green; text-align: center; font-weight: bold; margin: 15px 0; }
+        .error { color: red; text-align: center; font-weight: bold; margin: 15px 0; }
+
+        button.contact-btn {
+            margin-top: 10px;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            background-color: #28a745;
+            cursor: pointer;
+        }
+        button.contact-btn:hover { background-color: #218838; }
     </style>
 
     <script th:inline="javascript">
@@ -73,13 +104,30 @@
 <div class="container">
     <h1>All Lost Items</h1>
 
+    <p th:if="${message}" th:text="${message}" class="message"></p>
+    <p th:if="${error}" th:text="${error}" class="error"></p>
+
+    <div th:if="${#lists.isEmpty(items)}" style="text-align: center; color: #888; margin: 30px 0;">
+        No lost items found.
+    </div>
+
     <div th:each="item : ${items}" th:attr="id=${'item-' + item.id}" class="item-card">
         <div class="item-details">
-            <h2>Item Name: <span th:text="${item.itemName}"></span></h2>
+            <p><strong>Item Name:</strong> <span th:text="${item.itemName}">-</span></p>
             <p><strong>Description:</strong> <span th:text="${item.description}"></span></p>
             <p><strong>Location:</strong> <span th:text="${item.location}"></span></p>
-            <p><strong>Contact:</strong> <span th:text="${item.contactInfo}"></span></p>
+            <p><strong>Status:</strong> <span th:text="${item.status}"></span></p>
             <p><strong>Date Lost:</strong> <span th:text="${item.dateLost}"></span></p>
+
+            <div th:if="${item.status == 'PENDING'}">
+                <a th:href="@{/get-lost-contact/{id}(id=${item.id})}">
+                    <button class="contact-btn">View Contact Details</button>
+                </a>
+            </div>
+
+            <div th:if="${item.status == 'AWAITING_DELETION'}">
+                <p style="color: #ff9900; font-weight: bold; margin-top: 10px;">Confirmation Pending from Reporter.</p>
+            </div>
         </div>
 
         <div class="item-image">

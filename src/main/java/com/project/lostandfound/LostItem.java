@@ -6,20 +6,28 @@ public class LostItem {
     private String itemName;
     private String description;
     private String location;
-    private String contactInfo;
+    private String contactName;   // new
+    private String contactPhone;  // new
+    private String contactEmail;  // new
     private String dateLost;
     private String imagePath;
+    private String status;        // optional, to track AWAITING_DELETION / DELETED etc.
 
     public LostItem() {}
 
-    public LostItem(int id, String itemName, String description, String location, String contactInfo, String dateLost, String imagePath) {
+    public LostItem(int id, String itemName, String description, String location,
+                    String contactName, String contactPhone, String contactEmail,
+                    String dateLost, String imagePath, String status) {
         this.id = id;
         this.itemName = itemName;
         this.description = description;
         this.location = location;
-        this.contactInfo = contactInfo;
+        this.contactName = contactName;
+        this.contactPhone = contactPhone;
+        this.contactEmail = contactEmail;
         this.dateLost = dateLost;
         this.imagePath = imagePath;
+        this.status = status;
     }
 
     public int getId() { return id; }
@@ -34,12 +42,21 @@ public class LostItem {
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
 
-    public String getContactInfo() { return contactInfo; }
-    public void setContactInfo(String contactInfo) { this.contactInfo = contactInfo; }
+    public String getContactName() { return contactName; }
+    public void setContactName(String contactName) { this.contactName = contactName; }
+
+    public String getContactPhone() { return contactPhone; }
+    public void setContactPhone(String contactPhone) { this.contactPhone = contactPhone; }
+
+    public String getContactEmail() { return contactEmail; }
+    public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
 
     public String getDateLost() { return dateLost; }
     public void setDateLost(String dateLost) { this.dateLost = dateLost; }
 
     public String getImagePath() { return imagePath; }
     public void setImagePath(String imagePath) { this.imagePath = imagePath; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }
