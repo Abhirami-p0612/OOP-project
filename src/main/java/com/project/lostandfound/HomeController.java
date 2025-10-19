@@ -233,4 +233,38 @@ public class HomeController {
         redirectAttributes.addFlashAttribute("message", "Item successfully removed from the list!");
         return "redirect:/selection";
     }
+    // --- Handle Lost Report ---
+    @PostMapping("/report-lost")
+    public String handleReportLost(
+            @RequestParam("itemName") String itemName,
+            @RequestParam("description") String description,
+            @RequestParam("location") String location,
+            @RequestParam("contact") String contact,
+            @RequestParam("dateLost") String dateLost,
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            Model model) {
+
+        try {
+            int rowsAffected = lostItemRepository.save(itemName, description, location, contact, dateLost, image);
+
+            // After saving, check for a similar found item and redirect if found
+            FoundItem match = foundItemRepository.findSimilar(itemName, description);
+            if (match != null) {
+                model.addAttribute("message", "We found a similar item reported as FOUND. Redirecting you to the item...");
+                return "redirect:/view-found?highlightId=" + match.getId();
+            }
+
+            if (rowsAffected > 0) {
+                model.addAttribute("message", "Item reported successfully!");
+                return "selection";
+            } else {
+                model.addAttribute("error", "Failed to save the item. Please try again.");
+                return "report-lost";
+            }
+        } catch (Exception e) {
+            model.addAttribute("error", "An unexpected error occurred: " + e.getMessage());
+            return "report-lost";
+        }
+    }
+
 }

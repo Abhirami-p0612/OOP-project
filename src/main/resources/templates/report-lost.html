@@ -2,9 +2,8 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Report Found Item</title>
+    <title>Report Lost Item</title>
     <style>
-        /* START OF REQUESTED STYLES */
         body {
             font-family: Arial, sans-serif;
             background: #f4f7fc;
@@ -36,7 +35,6 @@
             font-size: 14px;
         }
 
-        /* Blue button style as requested in the final CSS block */
         button {
             width: 100%;
             padding: 14px;
@@ -44,87 +42,49 @@
             font-weight: bold;
             border: none;
             border-radius: 8px;
-            background-color: #007BFF; /* Primary Blue */
+            background-color: #007BFF;
             color: white;
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
-        button:hover {
-            background-color: #0056b3; /* Darker Blue on hover */
-            transform: scale(1.03);
-        }
+        button:hover { background-color: #0056b3; transform: scale(1.03); }
 
         .message { color: green; text-align: center; margin-bottom: 15px; font-weight: bold; }
         .error { color: red; text-align: center; margin-bottom: 15px; font-weight: bold; }
-        /* END OF REQUESTED STYLES */
-
-        /* Specific style for the contact details header */
-        #contact-details h3 {
-            margin-top: 10px;
-            margin-bottom: 15px;
-            color: #007BFF;
-            border-bottom: 2px solid #f4f7fc;
-            padding-bottom: 5px;
-        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Report Found Item</h2>
+    <h2>Report Lost Item</h2>
 
+    <!-- Messages -->
     <p th:if="${message}" th:text="${message}" class="message"></p>
     <p th:if="${error}" th:text="${error}" class="error"></p>
 
-    <form action="/report-found" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
+    <form action="/report-lost" method="post" enctype="multipart/form-data">
         <label for="itemName">Item Name:</label>
         <input type="text" id="itemName" name="itemName" required>
 
         <label for="description">Description:</label>
         <textarea id="description" name="description" rows="4" required></textarea>
 
-        <label for="location">Found Location:</label>
+        <label for="location">Lost Location:</label>
         <input type="text" id="location" name="location" required>
 
-        <label for="dateFound">Date Found:</label>
-        <input type="date" id="dateFound" name="dateFound" required>
+        <label for="contact">Your Contact Info:</label>
+        <input type="text" id="contact" name="contact" required>
+
+        <label for="dateLost">Date Lost:</label>
+        <input type="date" id="dateLost" name="dateLost" required>
 
         <label for="image">Upload Image of Item (optional):</label>
         <input type="file" id="image" name="image" accept="image/*">
 
-        <section id="contact-details">
-            <h3>Your Contact Details (Reporter)</h3>
-
-            <label for="contactName">Name:</label>
-            <input type="text" id="contactName" name="contactName" required>
-
-            <label for="contactPhone">Phone Number (10 digits only):</label>
-            <input type="tel" id="contactPhone" name="contactPhone" pattern="[0-9]{10}" maxlength="10" required>
-
-            <label for="contactEmail">Email:</label>
-            <input type="email" id="contactEmail" name="contactEmail" required>
-        </section>
-
-        <button type="submit">Submit Found Report</button>
+        <button type="submit">Submit Report</button>
     </form>
 </div>
 
-<script>
-    /**
-     * Client-side validation for the 10-digit phone number.
-     * This is supplemental to the 'pattern' attribute.
-     */
-    function validateForm() {
-        const phoneInput = document.getElementById('contactPhone');
-        const phoneValue = phoneInput.value;
-
-        if (!/^\d{10}$/.test(phoneValue)) {
-            alert('Phone number must be exactly 10 digits and contain only numbers.');
-            return false;
-        }
-        return true;
-    }
-</script>
 </body>
 </html>
