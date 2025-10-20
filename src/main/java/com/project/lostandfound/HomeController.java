@@ -91,6 +91,13 @@ public class HomeController {
         return "redirect:/selection";
     }
 
+    // --- Logout ---
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/index";
+    }
+
     // --- Navigation Pages ---
     @GetMapping("/report-found")
     public String reportFoundPage() {
@@ -226,7 +233,7 @@ public class HomeController {
         Optional<FoundItem> itemOptional = foundItemRepository.findById(id);
         if (itemOptional.isPresent()) {
             model.addAttribute("item", itemOptional.get());
-            return "contact-details";
+            return "contact-found"; // renamed template
         } else {
             redirectAttributes.addFlashAttribute("error", "Item not found.");
             return "redirect:/view-found";

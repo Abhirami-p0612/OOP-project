@@ -4,8 +4,33 @@
     <meta charset="UTF-8">
     <title>Login / Sign Up</title>
     <link rel="stylesheet" href="/index.css">
+    <style>
+        /* Logout button placed top-right on the page */
+        .logout-fixed {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 999;
+        }
+        .logout-btn {
+            background-color: #23395d;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .logout-btn:hover { opacity: 0.9; }
+    </style>
 </head>
 <body>
+<!-- Logout (visible when session has username) -->
+<div th:if="${session.username}" class="logout-fixed">
+    <a th:href="@{/logout}" class="logout-btn">Logout</a>
+</div>
+
 <div class="container">
     <!-- LEFT SIDE -->
     <div class="left-side">

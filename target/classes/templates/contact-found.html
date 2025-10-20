@@ -2,8 +2,9 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Lost Item Contact Details</title>
+    <title>Contact Details</title>
     <style>
+        /* Add basic styles for the new page */
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f4f4f4; }
         .details-box { max-width: 500px; margin: 30px auto; padding: 25px; border: 1px solid #ccc; border-radius: 8px; background-color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         h2 { color: #007BFF; }
@@ -21,6 +22,7 @@
         }
         .confirmation-form button:hover { background-color: #1e7e34; }
 
+        /* Logout button */
         .logout-fixed {
             position: fixed;
             top: 16px;
@@ -53,28 +55,23 @@
 </div>
 
 <div class="details-box" th:if="${item}">
-    <h2>Contact Details for Lost Item: <span th:text="${item.itemName}"></span></h2>
+    <h2>Contact Details for Found Item: <span th:text="${item.itemName}"></span></h2>
     <p><strong>Reporter Name:</strong> <span th:text="${item.contactName}"></span></p>
     <p><strong>Phone Number:</strong> <span th:text="${item.contactPhone}"></span></p>
     <p><strong>Email Address:</strong> <span th:text="${item.contactEmail}"></span></p>
-    <p><strong>Location:</strong> <span th:text="${item.location}"></span></p>
-    <p><strong>Date Lost:</strong> <span th:text="${item.dateLost}"></span></p>
     <hr>
 
     <div class="confirmation-form">
-        <p>If you have received your lost item, click below to notify the reporter.</p>
-        <form th:action="@{/confirm-lost-item-received/{id}(id=${item.id})}" method="post">
-            <button type="submit">Confirm Item Received</button>
+        <p>If you have received your item from the reporter, please click the button below to start the deletion process.</p>
+
+        <form th:action="@{/confirm-item-received/{id}(id=${item.id})}" method="post">
+            <button type="submit">Confirmation Button (Item Received)</button>
         </form>
 
         <p class="note">
-            *Note: Clicking the button will notify the reporter. They may confirm the handover.
+            *Note: After clicking, the item will be deleted only after the **reporter** confirms the successful handover.
         </p>
     </div>
-</div>
-
-<div th:if="${item == null}">
-    <p>Lost item not found.</p>
 </div>
 
 </body>

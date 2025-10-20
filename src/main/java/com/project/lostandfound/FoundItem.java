@@ -17,6 +17,7 @@ public class FoundItem {
 
     public FoundItem() {}
 
+    // Note: kept a simple no-arg constructor and setters/getters for BeanPropertyRowMapper
     public FoundItem(int id, String itemName, String description, String location, String contactInfo, String dateFound, String imagePath) {
         this.id = id;
         this.itemName = itemName;

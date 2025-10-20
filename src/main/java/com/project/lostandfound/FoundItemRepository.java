@@ -35,7 +35,6 @@ public class FoundItemRepository {
     public int save(String itemName, String description, String location, String contactName, String contactPhone, String contactEmail, String dateFound, MultipartFile image) {
 
         String imagePathForDb = null;
-        // ... (Image saving logic remains the same) ...
         if (image != null && !image.isEmpty()) {
             String originalFilename = StringUtils.cleanPath(image.getOriginalFilename());
             String imageName = UUID.randomUUID().toString() + "_" + originalFilename;

@@ -82,3 +82,16 @@ body{
 .signup-btn:hover {
     background-color: #2563eb;  /* Darker blue on hover */
 }
+
+/* Logout button (matching theme) */
+.logout-btn {
+    background-color: #23395d;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+}
+.logout-btn:hover { opacity: 0.9; }

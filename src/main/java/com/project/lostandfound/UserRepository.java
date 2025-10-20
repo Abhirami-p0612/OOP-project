@@ -43,6 +43,4 @@ public class UserRepository {
         String sql = "UPDATE users SET notification_message = NULL WHERE email = ?";
         jdbcTemplate.update(sql, email);
     }
-
-
 }

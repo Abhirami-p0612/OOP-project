@@ -5,8 +5,6 @@ CREATE TABLE users (
     notification_message VARCHAR(255)
 );
 
-
-
 CREATE TABLE lost_items (
     id INT PRIMARY KEY AUTO_INCREMENT,
     item_name VARCHAR(255) NOT NULL,
@@ -26,13 +24,11 @@ CREATE TABLE lost_items (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
 CREATE TABLE found_items (
     id INT PRIMARY KEY AUTO_INCREMENT,
     item_name VARCHAR(255),
     description TEXT,
     location VARCHAR(255),
-    -- REMOVE: contact_info VARCHAR(255),
 
     -- ADDED: New Contact Details
     contact_name VARCHAR(255) NOT NULL,
