@@ -285,6 +285,29 @@ public class HomeController {
         }
         return "redirect:/selection";
     }
+    @PostMapping("/reject-found-item/{id}")
+    public String rejectFoundItem(@PathVariable int id, HttpSession session, RedirectAttributes redirectAttributes) {
+        String username = (String) session.getAttribute("username");
+        Optional<FoundItem> itemOpt = foundItemRepository.findById(id);
+
+        if (itemOpt.isPresent()) {
+            FoundItem item = itemOpt.get();
+            // Only the original reporter can reject
+            if (item.getContactEmail().equals(username)) {
+                foundItemRepository.updateStatus(id, "PENDING");
+                userRepository.saveNotification(item.getContactEmail(),
+                        "The confirmation for your reported item '" + item.getItemName() + "' was rejected. Status reverted to pending.");
+                redirectAttributes.addFlashAttribute("message", "Confirmation rejected. Item status reverted to pending.");
+            } else {
+                redirectAttributes.addFlashAttribute("error", "You are not authorized to reject this item.");
+            }
+        } else {
+            redirectAttributes.addFlashAttribute("error", "Item not found.");
+        }
+
+        return "redirect:/selection";
+    }
+
 
     // --- Get Contact Details for Lost Item ---
     @GetMapping("/get-lost-contact/{id}")
@@ -311,6 +334,27 @@ public class HomeController {
         } else {
             redirectAttributes.addFlashAttribute("error", "You are not authorized to delete this item.");
         }
+        return "redirect:/selection";
+    }
+    @PostMapping("/reject-lost-item/{id}")
+    public String rejectLostItem(@PathVariable int id, HttpSession session, RedirectAttributes redirectAttributes) {
+        String username = (String) session.getAttribute("username");
+        Optional<LostItem> itemOpt = lostItemRepository.findById(id);
+
+        if (itemOpt.isPresent()) {
+            LostItem item = itemOpt.get();
+            if (item.getContactEmail().equals(username)) {
+                lostItemRepository.updateStatus(id, "PENDING");
+                userRepository.saveNotification(item.getContactEmail(),
+                        "The confirmation for your reported lost item '" + item.getItemName() + "' was rejected. Status reverted to pending.");
+                redirectAttributes.addFlashAttribute("message", "Rejection successful. Item status reverted to pending.");
+            } else {
+                redirectAttributes.addFlashAttribute("error", "You are not authorized to reject this item.");
+            }
+        } else {
+            redirectAttributes.addFlashAttribute("error", "Item not found.");
+        }
+
         return "redirect:/selection";
     }
 

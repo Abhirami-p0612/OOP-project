@@ -131,6 +131,21 @@
             right: 16px;
             z-index: 999;
         }
+
+    /* No button hover */
+    button.no-btn {
+        background-color: gray;
+        color: white;
+        border: none;
+        padding: 6px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    button.no-btn:hover {
+        background-color: #5a5a5a; /* darker gray */
+        transform: scale(1.05);
+    }
         .logout-btn {
             background-color: #23395d;
             color: white;
@@ -169,8 +184,14 @@
             <li th:each="item : ${awaitingFound}">
                 <span th:text="${item.itemName}"></span>
                 <form th:action="@{/confirm-found-item-deletion/{id}(id=${item.id})}" method="post" style="display:inline;">
-                    <button type="submit" class="confirm-btn">Confirm Delete</button>
+                    <button type="submit" class="confirm-btn">Confirm</button>
                 </form>
+
+                <form th:action="@{/reject-found-item/{id}(id=${item.id})}" method="post" style="display:inline; margin-left:10px;">
+                    <button type="submit" class="no-btn">No</button>
+
+                </form>
+
             </li>
         </ul>
     </div>
@@ -182,8 +203,14 @@
             <li th:each="item : ${awaitingLost}">
                 <span th:text="${item.itemName}"></span>
                 <form th:action="@{/confirm-lost-item-deletion/{id}(id=${item.id})}" method="post" style="display:inline;">
-                    <button type="submit" class="confirm-btn">Confirm Delete</button>
+                    <button type="submit" class="confirm-btn">Confirm</button>
                 </form>
+
+                <form th:action="@{/reject-lost-item/{id}(id=${item.id})}" method="post" style="display:inline; margin-left:10px;">
+                    <button type="submit" class="no-btn">No</button>
+
+                </form>
+
             </li>
         </ul>
     </div>
